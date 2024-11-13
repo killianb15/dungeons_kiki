@@ -47,10 +47,49 @@ def fouillez(inventaire):
 def CountOr(inventaire):
     return inventaire.count("Or")
 
+# Vérifie s'il y a 3 runes dans l'inventaire et initie un combat spécial
+def combattre_boss(vie, inventaire):
+    if inventaire.count("Rune") >= 3:
+        print("\nVous avez 3 runes ! Un combat spécial contre le boss commence maintenant !")
+        inventaire = [item for item in inventaire if item != "Rune"]  # Enlève les 3 runes de l'inventaire
+        
+        boss_vie = 3  # Le boss a 3 points de vie
+        print("Le boss a 3 points de vie !")
+        
+        while vie > 0 and boss_vie > 0:  # Le combat dure jusqu'à ce que le joueur ou le boss perde toutes ses vies
+            attaque_boss = random.choice(["attaque lourde", "attaque rapide", "essoufflé"])
+            
+            print(f"\nLe boss prépare une attaque ! {attaque_boss}")
+            action_joueur = input("Choisissez votre action : 1 (Roulade), 2 (Protection), 3 (Attaque) : ")
+            
+            if attaque_boss == "attaque lourde" and action_joueur == '1':
+                print("Vous esquivez l'attaque lourde avec une roulade !")
+            elif attaque_boss == "attaque rapide" and action_joueur == '2':
+                print("Vous bloquez l'attaque rapide avec une protection !")
+            elif attaque_boss == "essoufflé" and action_joueur == '3':
+                print("Vous attaquez le boss pendant qu'il est essoufflé !")
+                boss_vie -= 1  # Le boss perd un point de vie
+                print(f"Le boss perd 1 point de vie. Il lui reste {boss_vie} points de vie.")
+            else:
+                vie -= 1
+                print(f"L'action a échoué, vous perdez un point de vie. Vie restante : {vie}")
+                
+            if vie <= 0:
+                print("Vous avez perdu le combat contre le boss.")
+                return vie, inventaire, False  # Fin du jeu si le joueur meurt
+            
+            if boss_vie <= 0:
+                print("Vous avez vaincu le boss ! Félicitations !")
+                return vie, inventaire, True  # Boss vaincu, retour au jeu
+
+    return vie, inventaire, False
+
+
 # Interagir avec la salle où le joueur se trouve
 def interaction_salle(matrice, pos_joueur, vie, inventaire):
     x, y = pos_joueur
     salle = matrice[x][y]
+
     if salle == 1:  # Si la salle contient un ennemi
         vie, combat_gagne = combat(vie, inventaire)
         if not combat_gagne:
@@ -101,7 +140,7 @@ def combat(vie, inventaire):
 # Fonction pour gérer les achats dans le village
 def traverse_village(inventaire):
     boutique = input("Voulez-vous acheter un objet avec votre Or (oui ou non)? ")
-    if boutique.lower() == "oui": #tout mettre en minuscule pour accepté les OUI Oui  
+    if boutique.lower() == "oui": 
         choix = input("1 d'or et je vous donne un objet magnifique (oui ou non) ")
         if choix.lower() == "oui" and CountOr(inventaire) >= 1:
             inventaire = enlever_or(inventaire, 1)
@@ -129,14 +168,12 @@ def enlever_or(inventaire, quantite):
 
 # Fonction avant chaque niveau pour gérer les objets de l'inventaire
 def utiliser_objets(inventaire, vie):
-    # Vérifie si l'inventaire n'est pas vide
     if not inventaire:
         print("Votre inventaire est vide. Vous ne pouvez pas utiliser d'objets.")
         return vie, inventaire, True  # On continue le niveau sans demander d'objets
     
     print(f"Inventaire actuel : {inventaire}")
     
-    # Demander à utiliser des objets uniquement si l'inventaire contient des objets
     if "Vie" in inventaire:
         choix_vie = input("Voulez-vous utiliser une Vie pour récupérer un point de vie (oui/non)? ")
         if choix_vie.lower() == "oui":
@@ -153,13 +190,12 @@ def utiliser_objets(inventaire, vie):
     
     return vie, inventaire, True  # Continue le jeu
 
-# Fonction principale du jeu
+# Fonction principale du jeudef 
 def main():
     vie = 2
-    inventaire = []
+    inventaire = ["Rune", "Rune", "Rune"]
     compteur_dungeons = 0  # Compteur de donjons
 
-    # La boucle continue tant que le joueur a des points de vie
     while vie > 0:
         print("\n--- Avant de commencer le niveau, choisissez vos objets ---")
         vie, inventaire, continuer = utiliser_objets(inventaire, vie)
@@ -194,9 +230,16 @@ def main():
                     print(f"Votre inventaire à la fin du donjon : {inventaire}")
                 compteur_dungeons += 1  # Incrementer le compteur des donjons
                 break  # Passe au niveau suivant
+
+        # Après avoir quitté le donjon et visité le village
+        vie, inventaire, boss_combat = combattre_boss(vie, inventaire)
         
+        if boss_combat:
+            print("Vous avez battu le boss final, mais le jeu continue !")
+            # Vous pouvez ajouter une logique pour continuer à explorer d'autres niveaux ou boucles ici
+            continue  # Continue la boucle principale sans sortir du jeu, après avoir vaincu le boss
+
     print(f"☠️ Vous avez perdu toutes vos vies. Fin de la partie. ☠️")
     print(f"Nombre de donjons terminés : {compteur_dungeons}")
 
-# Lancer le jeu
 main()
